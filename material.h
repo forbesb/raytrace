@@ -3,6 +3,7 @@
 
 #include "hittable.h"
 #include "ray.h"
+#include "texture.h"
 #include <math.h>
 
 float randfloat();
@@ -43,14 +44,14 @@ class material {
 
 class lambertian: public material {
     public:
-        lambertian(const vec3& a) : albedo(a) {}
+        lambertian(texture* a) : albedo(a) {}
         virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
             vec3 target = rec.p + rec.normal + random_in_unit_sphere();
-            scattered = ray(rec.p, target-rec.p);
-            attenuation=albedo;
+            scattered = ray(rec.p, target-rec.p, r_in.time());
+            attenuation=albedo->value(0,0,rec.p);
             return true;
         }
-        vec3 albedo;
+        texture* albedo;
 };
 
 class metal : public material {
@@ -58,7 +59,7 @@ class metal : public material {
         metal(const vec3& a, float f) : albedo(a) { if ( f < 1) fuzz = f; else fuzz = 1;}
         virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const {
             vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-            scattered = ray(rec.p, reflected+fuzz*random_in_unit_sphere());
+            scattered = ray(rec.p, reflected+fuzz*random_in_unit_sphere(), r_in.time());
             attenuation=albedo;
             return (dot(scattered.direction(), rec.normal) > 0 );
         }
@@ -96,9 +97,9 @@ class dielectric: public material {
             }
 
             if (randfloat() < reflect_prob) {
-                scattered = ray(rec.p, reflected);
+                scattered = ray(rec.p, reflected, r_in.time());
             } else {
-                scattered = ray(rec.p, refracted);
+                scattered = ray(rec.p, refracted, r_in.time());
             }
             return true;
         }
