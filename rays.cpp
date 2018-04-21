@@ -9,6 +9,8 @@
 #include "camera.h"
 #include "material.h"
 #include "bvh.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 float randfloat(){
     return ((float) rand() / RAND_MAX);
@@ -68,6 +70,13 @@ hittable* two_perlin_spheres() {
     return new hittable_list(list,2);
 }
 
+hittable* image() {
+    int nx, ny, nn;
+    unsigned char *tex_data = stbi_load("earthmap.jpg", &nx, &ny, &nn, 0);
+    material *mat = new lambertian(new image_texture(tex_data, nx, ny));
+    return new sphere(vec3(0,0,0), 2, mat);
+}
+
 
 int main() {
     
@@ -79,7 +88,8 @@ int main() {
     std::cout << "P3\n" << nx << " " << ny << "\n255\n";
 
     //hittable *world = random_scene(5000);
-    hittable *world = two_perlin_spheres();
+    //hittable *world = two_perlin_spheres();
+    hittable *world = image();
     vec3 lookfrom(13,2,3);
     vec3 lookat(0,0,0);
     float dist_to_focus = 10.0;
